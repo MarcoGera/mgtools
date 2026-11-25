@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MGtools — Закладки • Заметки • Напоминания (ПК & Samsung S25 Plus)</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --surface: #151c28;
+      --surface-hover: #1c2536;
+      --border: #263147;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    header {
+      background: rgba(11,15,23,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 20; flex-wrap: wrap; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;
+      box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+    }
+    .brand-title h1 { font-size: 17px; font-weight: 700; }
+    .brand-title p { font-size: 12px; color: var(--muted); }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    button {
+      cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px; transition: all .15s ease;
+    }
+    button:hover { background: var(--surface-hover); border-color: #3b4a6b; }
+    button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    button.primary:hover { background: var(--primary-hover); }
+    button.active-filter { border-color: var(--warning); color: var(--warning); }
+    .layout { display: flex; flex: 1; max-width: 1500px; width: 100%; margin: 0 auto; }
+    aside {
+      width: 250px; border-right: 1px solid var(--border); padding: 16px 12px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .nav-btn {
+      width: 100%; justify-content: flex-start; padding: 10px 12px; border-radius: 12px;
+      border: 1px solid transparent; background: transparent; font-size: 14px;
+    }
+    .nav-btn.active { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: #60a5fa; }
+    .sidebar-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .sidebar-title { font-size: 12px; color: var(--muted); margin: 4px 6px 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .folder-btn { width: 100%; justify-content: space-between; font-size: 13px; padding: 8px 10px; border: 1px solid transparent; background: transparent; }
+    .folder-btn.active { background: rgba(255,255,255,0.06); border-color: var(--border); }
+    .folder-left { display:flex; align-items:center; gap:8px; min-width:0; }
+    .folder-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .folder-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    main { flex: 1; padding: 18px 20px 80px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .search-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .search-input {
+      flex: 1; min-width: 220px; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 11px 14px; border-radius: 14px; font-size: 14px; outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .tags-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .tag-chip {
+      padding: 6px 12px; border-radius: 99px; font-size: 12px; background: var(--surface);
+      border: 1px solid var(--border); cursor: pointer; white-space: nowrap;
+    }
+    .tag-chip.active { background: rgba(59,130,246,0.2); border-color: var(--primary); color: #93c5fd; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px;
+      display: flex; flex-direction: column; gap: 8px; transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .card:hover { border-color: #3b4d71; transform: translateY(-1px); }
+    .card.completed { border-color: var(--success); background: rgba(16,185,129,0.08); box-shadow: inset 0 0 0 1px rgba(16,185,129,0.15); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .badge-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
+    .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space:nowrap; }
+    .folder-badge { font-size: 11px; padding: 3px 8px; border-radius: 99px; border:1px solid; max-width: 140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .card-actions { display: flex; gap: 4px; flex-shrink:0; }
+    .icon-btn { padding: 4px 7px; border-radius: 8px; font-size: 13px; background: transparent; border: 1px solid transparent; }
+    .icon-btn:hover { background: rgba(255,255,255,0.06); }
+    .done-label { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.5px; color:#34d399; background:rgba(16,185,129,.18); padding:2px 7px; border-radius:6px; width:max-content; }
+    .card-title { font-size: 15px; font-weight: 700; line-height: 1.35; }
+    .card.completed .card-title { text-decoration: line-through; color: var(--muted); }
+    .card-url { font-size: 13px; color: #60a5fa; text-decoration: none; word-break: break-all; }
+    .card-url:hover { text-decoration: underline; }
+    .card-content { font-size: 13px; color: #d1d5db; line-height: 1.45; white-space: pre-wrap; }
+    .card.completed .card-content { color: #9ca3af; }
+    .images-row { display:flex; gap:6px; overflow-x:auto; padding:2px 0; }
+    .thumb { width:64px; height:64px; object-fit:cover; border-radius:10px; border:1px solid var(--border); flex-shrink:0; cursor:pointer; }
+    .card-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:2px; }
+    .reminder-pill { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.07); color: #e5e7eb; }
+    .reminder-pill.overdue { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .card-tags { display:flex; gap:6px; flex-wrap:wrap; }
+    .card-tag { font-size: 11px; color: #93c5fd; }
+    .complete-bar {
+      margin-top: 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid #334155;
+      background: rgba(255,255,255,0.03); display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;
+      font-weight:600; font-size:13px; color:#cbd5e1;
+    }
+    .complete-bar.checked { background: rgba(16,185,129,0.18); border-color: var(--success); color: #34d399; }
+    .complete-box { width:20px; height:20px; border-radius:6px; border:2px solid #64748b; display:flex; align-items:center; justify-content:center; font-size:13px; }
+    .complete-bar.checked .complete-box { border-color: var(--success); background: var(--success); color:#052e1a; }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center;
+      padding: 16px; z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px; max-width: 560px; width: 100%;
+      padding: 20px; display: flex; flex-direction: column; gap: 12px; max-height: 92vh; overflow:auto;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; color: var(--muted); }
+    .form-control, select.form-control, textarea.form-control {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 10px; font-size: 14px;
+    }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .editor-images { display:flex; gap:8px; flex-wrap:wrap; }
+    .editor-thumb-wrap { position:relative; }
+    .editor-thumb { width:78px; height:78px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
+    .remove-img { position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%; background:#111827; border:1px solid var(--border); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; padding:0; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; background: #1e293b; border: 1px solid var(--primary); color: #fff;
+      padding: 12px 18px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); display: none; z-index: 100; max-width: 420px;
+    }
+    @media (max-width: 860px) {
+      .layout { flex-direction: column; }
+      aside { width: 100%; flex-direction: row; flex-wrap:wrap; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 10px 12px; }
+      .nav-btn { width: auto; white-space: nowrap; }
+      .sidebar-section { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">MG</div>
+      <div class="brand-title">
+        <h1>MGtools — ПК и Samsung Galaxy S25 Plus</h1>
+        <p id="syncStatus">Закладки • Заметки • Напоминания • Папки • Изображения (mgtools_sync.json)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="pinFilterBtn" onclick="togglePinnedFilter()">📌 Закрепленные</button>
+      <button onclick="exportJsonFile()">📤 Экспорт JSON</button>
+      <button onclick="document.getElementById('importInput').click()">📥 Импорт/Слияние</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="handleFileImport(event)" />
+      <button onclick="document.getElementById('singleImportInput').click()">📄 Загрузить заметку</button>
+      <input type="file" id="singleImportInput" accept=".json" style="display:none" onchange="handleSingleImport(event)" />
+      <button class="primary" onclick="openEditor()">➕ Добавить</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <button class="nav-btn active" data-tab="all" onclick="selectTab('all')">🗂 Все записи</button>
+      <button class="nav-btn" data-tab="bookmark" onclick="selectTab('bookmark')">🔖 Закладки</button>
+      <button class="nav-btn" data-tab="note" onclick="selectTab('note')">📝 Заметки</button>
+      <button class="nav-btn" data-tab="reminder" onclick="selectTab('reminder')">⏰ Напоминания</button>
+      <div class="sidebar-section" id="foldersSection">
+        <div class="row" style="justify-content:space-between; margin-bottom:6px;">
+          <div class="sidebar-title" style="margin:0;">Папки заметок</div>
+          <button onclick="openFolderEditor()" style="padding:4px 8px; font-size:12px;">＋</button>
+        </div>
+        <div id="foldersList"></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="search-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="Поиск по заголовку, ссылкам, тексту, папкам или #тегам..." oninput="render()" />
+      </div>
+      <div class="tags-bar" id="tagsBar"></div>
+      <div class="grid" id="itemsGrid"></div>
+    </main>
+  </div>
+
+  <!-- Редактор записи -->
+  <div class="modal-backdrop" id="editorModal">
+    <div class="modal">
+      <h3 id="modalTitle">Новая запись MGtools</h3>
+      <input type="hidden" id="editId" />
+      <div class="form-group">
+        <label>Тип записи</label>
+        <select id="editType" class="form-control" onchange="toggleUrlField()">
+          <option value="bookmark">🔖 Закладка (ссылка)</option>
+          <option value="note">📝 Заметка (S Pen / текст)</option>
+          <option value="reminder">⏰ Напоминание (с уведомлением)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Заголовок *</label>
+        <input type="text" id="editTitle" class="form-control" placeholder="Название записи" />
+      </div>
+      <div class="form-group" id="urlGroup">
+        <label>URL ссылка</label>
+        <input type="url" id="editUrl" class="form-control" placeholder="https://example.com" />
+      </div>
+      <div class="form-group">
+        <label>Описание / Текст заметки</label>
+        <textarea id="editContent" rows="4" class="form-control" placeholder="Подробности, заметка..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Теги (через запятую)</label>
+        <input type="text" id="editTags" class="form-control" placeholder="работа, важное, s25plus" />
+      </div>
+      <div class="form-group">
+        <label>Папка / группа</label>
+        <div class="row">
+          <select id="editFolder" class="form-control" style="flex:1;"></select>
+          <button onclick="openFolderEditor()" type="button">＋ Папка</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Изображения</label>
+        <input type="file" id="editImagesInput" accept="image/*" multiple onchange="handleImageSelect(event)" />
+        <div class="editor-images" id="editorImages"></div>
+      </div>
+      <div class="form-group">
+        <label>Дата и время напоминания (уведомление на ПК и Samsung S25 Plus)</label>
+        <input type="datetime-local" id="editReminder" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>Цвет карточки</label>
+        <select id="editColor" class="form-control">
+          <option value="#3B82F6">Синий</option>
+          <option value="#10B981">Изумрудный</option>
+          <option value="#F59E0B">Янтарный</option>
+          <option value="#EF4444">Красный (Важно)</option>
+          <option value="#8B5CF6">Фиолетовый</option>
+          <option value="#EC4899">Розовый</option>
+        </select>
+      </div>
+      <div class="row" style="justify-content:space-between; margin-top:6px;">
+        <div class="row">
+          <button id="saveSingleBtn" onclick="exportSingleItemFromEditor()" style="display:none;">💾 Сохранить в файл</button>
+        </div>
+        <div class="row">
+          <button onclick="closeEditor()">Отмена</button>
+          <button class="primary" onclick="saveItem()">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Редактор папки -->
+  <div class="modal-backdrop" id="folderModal">
+    <div class="modal" style="max-width:420px;">
+      <h3 id="folderModalTitle">Новая папка / группа</h3>
+      <input type="hidden" id="folderId" />
+      <div class="form-group">
+        <label>Название папки (например: Работа)</label>
+        <input type="text" id="folderName" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>Цвет папки</label>
+        <select id="folderColor" class="form-control">
+          <option value="#3B82F6">Синий</option>
+          <option value="#10B981">Изумрудный</option>
+          <option value="#F59E0B">Янтарный</option>
+          <option value="#EF4444">Красный</option>
+          <option value="#8B5CF6">Фиолетовый</option>
+          <option value="#EC4899">Розовый</option>
+          <option value="#14B8A6">Бирюзовый</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="folderPinned" /> Закрепить папку</label>
+      </div>
+      <div class="row" style="justify-content:space-between; margin-top:6px;">
+        <button id="deleteFolderBtn" onclick="deleteFolder()" style="display:none; color:#f87171; border-color:#7f1d1d;">Удалить</button>
+        <div class="row" style="margin-left:auto;">
+          <button onclick="closeFolderEditor()">Отмена</button>
+          <button class="primary" onclick="saveFolder()">Сохранить папку</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'mgtools_items_v1';
+    const FOLDERS_KEY = 'mgtools_folders_v1';
+    const LEGACY_ITEMS_KEY = 's25u_hub_items_v1';
+    const NO_FOLDER = '__NO_FOLDER__';
+
+    let items = [];
+    let folders = [];
+    let currentTab = 'all';
+    let selectedTag = null;
+    let selectedFolderId = null; // null | folderId | NO_FOLDER
+    let onlyPinned = false;
+    let editorImages = [];
+    const notifiedIds = new Set();
+
+    function uid() {
+      return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function loadData() {
+      // migrate items
+      let rawItems = localStorage.getItem(STORAGE_KEY);
+      if (!rawItems) {
+        rawItems = localStorage.getItem(LEGACY_ITEMS_KEY);
+        if (rawItems) localStorage.setItem(STORAGE_KEY, rawItems);
+      }
+      try { items = rawItems ? JSON.parse(rawItems) : []; } catch { items = []; }
+      if (!Array.isArray(items)) items = [];
+      items = items.map(normalizeItem);
+
+      try { folders = JSON.parse(localStorage.getItem(FOLDERS_KEY) || '[]'); } catch { folders = []; }
+      if (!Array.isArray(folders)) folders = [];
+      folders = folders.map(normalizeFolder);
+
+      if (items.length === 0) {
+        seedData();
+      }
+      saveAll();
+    }
+
+    function normalizeItem(it) {
+      const now = new Date().toISOString();
+      return {
+        id: String(it.id || uid()),
+        type: ['bookmark','note','reminder'].includes(it.type) ? it.type : 'note',
+        title: String(it.title || 'Без названия'),
+        content: String(it.content || ''),
+        url: it.url ? String(it.url) : null,
+        tags: Array.isArray(it.tags) ? it.tags.map(t => String(t).trim()).filter(Boolean) : [],
+        reminderAt: it.reminderAt || null,
+        isCompleted: !!it.isCompleted,
+        isPinned: !!it.isPinned,
+        priority: it.priority || 'medium',
+        colorHex: it.colorHex || '#3B82F6',
+        checklist: Array.isArray(it.checklist) ? it.checklist : [],
+        images: Array.isArray(it.images) ? it.images.filter(Boolean) : [],
+        folderId: it.folderId ? String(it.folderId) : null,
+        createdAt: it.createdAt || now,
+        updatedAt: it.updatedAt || it.createdAt || now,
+        isDeleted: !!it.isDeleted
+      };
+    }
+
+    function normalizeFolder(f) {
+      const now = new Date().toISOString();
+      return {
+        id: String(f.id || uid()),
+        name: String(f.name || 'Папка'),
+        colorHex: f.colorHex || '#3B82F6',
+        isPinned: !!f.isPinned,
+        createdAt: f.createdAt || now,
+        updatedAt: f.updatedAt || f.createdAt || now,
+        isDeleted: !!f.isDeleted
+      };
+    }
+
+    function seedData() {
+      const now = Date.now();
+      const iso = (d) => new Date(d).toISOString();
+      const workFolder = { id: 'folder-work', name: 'Работа', colorHex: '#F59E0B', isPinned: true, createdAt: iso(now-7200000), updatedAt: iso(now-7200000), isDeleted:false };
+      folders = [workFolder];
+      items = [
+        {
+          id: 'sample-bookmark-1', type: 'bookmark', title: 'Документация Flutter', content: 'Сборка для Android (Samsung S25 Plus) и Windows ПК.',
+          url: 'https://docs.flutter.dev', tags: ['разработка','flutter'], reminderAt: null, isCompleted:false, isPinned:true, priority:'high',
+          colorHex:'#3B82F6', checklist:[], images:[], folderId:null, createdAt: iso(now-10800000), updatedAt: iso(now-10800000), isDeleted:false
+        },
+        {
+          id: 'sample-reminder-1', type: 'reminder', title: 'Синхронизировать MGtools с ПК', content: 'Проверить mgtools_sync.json в облачной папке (OneDrive/Google Drive).',
+          url:null, tags:['синхронизация','s25plus','пк'], reminderAt: iso(now+3600000), isCompleted:false, isPinned:true, priority:'high',
+          colorHex:'#EF4444', checklist:[], images:[], folderId:null, createdAt: iso(now-7200000), updatedAt: iso(now-7200000), isDeleted:false
+        },
+        {
+          id: 'sample-note-1', type: 'note', title: 'Заметки с папками и изображениями', content: 'Создавайте папки (Работа/Личное), меняйте их цвет, закрепляйте и переносите заметки. Добавляйте фото и сохраняйте каждую заметку в отдельный файл.',
+          url:null, tags:['заметки','mgtools'], reminderAt:null, isCompleted:false, isPinned:false, priority:'medium',
+          colorHex:'#10B981', checklist:[], images:[], folderId:'folder-work', createdAt: iso(now-3600000), updatedAt: iso(now-3600000), isDeleted:false
+        }
+      ];
+    }
+
+    function saveAll() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+      render();
+    }
+
+    function getFolderById(id) { return folders.find(f => f.id === id && !f.isDeleted) || null; }
+    function visibleFolders() {
+      return folders.filter(f => !f.isDeleted).sort((a,b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        return a.name.localeCompare(b.name, 'ru');
+      });
+    }
+
+    function selectTab(tab) {
+      currentTab = tab;
+      selectedFolderId = null;
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+      render();
+    }
+
+    function togglePinnedFilter() {
+      onlyPinned = !onlyPinned;
+      document.getElementById('pinFilterBtn').classList.toggle('active-filter', onlyPinned);
+      render();
+    }
+
+    function getAllTags() {
+      const s = new Set();
+      items.forEach(item => { if (!item.isDeleted) (item.tags||[]).forEach(t => s.add(t)); });
+      return Array.from(s).sort((a,b)=>a.localeCompare(b,'ru'));
+    }
+
+    function renderFoldersSidebar() {
+      const list = document.getElementById('foldersList');
+      const vf = visibleFolders();
+      let html = `
+        <button class="folder-btn ${selectedFolderId===null?'active':''}" onclick="selectedFolderId=null;render()">
+          <span class="folder-left"><span class="folder-dot" style="background:#64748b"></span><span class="folder-name">Все папки</span></span>
+        </button>
+        <button class="folder-btn ${selectedFolderId===NO_FOLDER?'active':''}" onclick="selectedFolderId='${NO_FOLDER}';render()">
+          <span class="folder-left"><span class="folder-dot" style="background:#475569"></span><span class="folder-name">Без папки</span></span>
+        </button>`;
+      vf.forEach(f => {
+        html += `
+          <button class="folder-btn ${selectedFolderId===f.id?'active':''}" onclick="selectedFolderId='${f.id}';render()" ondblclick="openFolderEditor('${f.id}')" title="Двойной клик — редактировать папку">
+            <span class="folder-left"><span class="folder-dot" style="background:${f.colorHex}"></span><span class="folder-name">${f.isPinned?'📌 ':''}${escapeHtml(f.name)}</span></span>
+            <span onclick="event.stopPropagation();openFolderEditor('${f.id}')" style="opacity:.7">✎</span>
+          </button>`;
+      });
+      list.innerHTML = html;
+    }
+
+    function render() {
+      renderFoldersSidebar();
+
+      const tags = getAllTags();
+      const tagsBar = document.getElementById('tagsBar');
+      tagsBar.innerHTML = `<span class="tag-chip ${selectedTag===null?'active':''}" onclick="selectedTag=null;render()">Все теги</span>` +
+        tags.map(t => `<span class="tag-chip ${selectedTag===t?'active':''}" onclick="selectedTag='${t}';render()">#${escapeHtml(t)}</span>`).join('');
+
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filtered = items.filter(item => !item.isDeleted)
+        .filter(item => currentTab === 'all' || item.type === currentTab)
+        .filter(item => !onlyPinned || item.isPinned)
+        .filter(item => !selectedTag || (item.tags||[]).includes(selectedTag))
+        .filter(item => {
+          if (selectedFolderId === NO_FOLDER) return !item.folderId || !getFolderById(item.folderId);
+          if (selectedFolderId) return item.folderId === selectedFolderId;
+          return true;
+        })
+        .filter(item => {
+          if (!q) return true;
+          const folder = getFolderById(item.folderId);
+          return (item.title||'').toLowerCase().includes(q) ||
+                 (item.content||'').toLowerCase().includes(q) ||
+                 (item.url||'').toLowerCase().includes(q) ||
+                 (item.tags||[]).some(t => t.toLowerCase().includes(q)) ||
+                 (folder ? folder.name.toLowerCase().includes(q) : false);
+        })
+        .sort((a,b) => {
+          if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+          if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        });
+
+      const grid = document.getElementById('itemsGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--muted)">Нет записей по выбранному фильтру</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => {
+        const typeLabel = item.type === 'bookmark' ? '🔖 Закладка' : item.type === 'note' ? '📝 Заметка' : '⏰ Напоминание';
+        const isOverdue = item.reminderAt && !item.isCompleted && new Date(item.reminderAt) < new Date();
+        const remText = item.reminderAt ? new Date(item.reminderAt).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        const folder = getFolderById(item.folderId);
+        const imgs = (item.images||[]).slice(0,4).map(src => `<img class="thumb" src="${src}" alt="img" onclick="window.open().document.write('<img src=&quot;${src}&quot; style=&quot;max-width:100%&quot;/>')"/>`).join('');
+        return `
+          <div class="card ${item.isCompleted ? 'completed' : ''}">
+            <div class="card-header">
+              <div class="badge-row">
+                <span class="badge" style="background:${item.colorHex}22;color:${item.colorHex}">${typeLabel}</span>
+                ${folder ? `<span class="folder-badge" style="background:${folder.colorHex}22;color:${folder.colorHex};border-color:${folder.colorHex}55">${folder.isPinned?'📌 ':''}${escapeHtml(folder.name)}</span>` : ''}
+              </div>
+              <div class="card-actions">
+                <button class="icon-btn" title="Закрепить" onclick="togglePin('${item.id}')">${item.isPinned?'📌':'📍'}</button>
+                <button class="icon-btn" title="В файл" onclick="exportSingleItemById('${item.id}')">💾</button>
+                <button class="icon-btn" title="Редактировать" onclick="openEditor('${item.id}')">✏️</button>
+                <button class="icon-btn" title="Удалить" onclick="deleteItem('${item.id}')">🗑</button>
+              </div>
+            </div>
+            ${item.isCompleted ? '<span class="done-label">✓ ВЫПОЛНЕНО</span>' : ''}
+            <div class="card-title">${escapeHtml(item.title)}</div>
+            ${item.url ? `<a class="card-url" href="${escapeAttr(item.url)}" target="_blank" rel="noopener">🔗 ${escapeHtml(item.url)}</a>` : ''}
+            ${imgs ? `<div class="images-row">${imgs}</div>` : ''}
+            <div class="card-content">${escapeHtml(item.content || '') || (item.images && item.images.length ? 'Изображений: '+item.images.length : '')}</div>
+            <div class="card-footer">
+              ${item.reminderAt ? `<span class="reminder-pill ${isOverdue?'overdue':''}">🔔 ${remText}</span>` : '<span></span>'}
+              <div class="card-tags">${(item.tags||[]).map(t=>`<span class="card-tag">#${escapeHtml(t)}</span>`).join('')}</div>
+            </div>
+            <div class="complete-bar ${item.isCompleted?'checked':''}" onclick="toggleComplete('${item.id}')">
+              <span class="complete-box">${item.isCompleted?'✓':''}</span>
+              <span>${item.isCompleted ? 'Выполнено (нажмите, чтобы снять отметку)' : 'Отметить как выполненное'}</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escapeAttr(str) { return String(str).replace(/"/g,'&quot;'); }
+
+    function togglePin(id) {
+      const item = items.find(e => e.id === id);
+      if (item) { item.isPinned = !item.isPinned; item.updatedAt = new Date().toISOString(); saveAll(); }
+    }
+    function toggleComplete(id) {
+      const item = items.find(e => e.id === id);
+      if (item) { item.isCompleted = !item.isCompleted; item.updatedAt = new Date().toISOString(); saveAll(); }
+    }
+    function deleteItem(id) {
+      const item = items.find(e => e.id === id);
+      if (item) { item.isDeleted = true; item.updatedAt = new Date().toISOString(); saveAll(); }
+    }
+
+    function toggleUrlField() {
+      const type = document.getElementById('editType').value;
+      document.getElementById('urlGroup').style.display = type === 'bookmark' ? 'flex' : 'none';
+    }
+
+    function populateFolderSelect(selectedId) {
+      const sel = document.getElementById('editFolder');
+      const opts = ['<option value="">Без папки</option>']
+        .concat(visibleFolders().map(f => `<option value="${f.id}">${f.isPinned?'📌 ':''}${escapeHtml(f.name)}</option>`));
+      sel.innerHTML = opts.join('');
+      sel.value = selectedId && getFolderById(selectedId) ? selectedId : '';
+    }
+
+    function renderEditorImages() {
+      const wrap = document.getElementById('editorImages');
+      wrap.innerHTML = editorImages.map((src, i) => `
+        <div class="editor-thumb-wrap">
+          <img class="editor-thumb" src="${src}" />
+          <button class="remove-img" onclick="removeEditorImage(${i})">✕</button>
+        </div>`).join('');
+    }
+    function removeEditorImage(i) { editorImages.splice(i,1); renderEditorImages(); }
+    function handleImageSelect(event) {
+      const files = Array.from(event.target.files || []);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => { editorImages.push(e.target.result); renderEditorImages(); };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
+    }
+
+    function openEditor(id = null) {
+      const existing = id ? items.find(e => e.id === id) : null;
+      document.getElementById('modalTitle').textContent = existing ? 'Редактировать запись' : 'Новая запись MGtools';
+      document.getElementById('editId').value = existing ? existing.id : '';
+      document.getElementById('editType').value = existing ? existing.type : (currentTab === 'all' ? 'bookmark' : currentTab);
+      document.getElementById('editTitle').value = existing ? existing.title : '';
+      document.getElementById('editUrl').value = existing && existing.url ? existing.url : '';
+      document.getElementById('editContent').value = existing ? existing.content : '';
+      document.getElementById('editTags').value = existing ? (existing.tags||[]).join(', ') : '';
+      document.getElementById('editColor').value = existing ? existing.colorHex : '#3B82F6';
+      populateFolderSelect(existing ? existing.folderId : (selectedFolderId && selectedFolderId !== NO_FOLDER ? selectedFolderId : ''));
+      editorImages = existing && Array.isArray(existing.images) ? [...existing.images] : [];
+      renderEditorImages();
+      document.getElementById('saveSingleBtn').style.display = existing ? 'inline-flex' : 'none';
+
+      if (existing && existing.reminderAt) {
+        const dt = new Date(existing.reminderAt);
+        const pad = n => String(n).padStart(2,'0');
+        document.getElementById('editReminder').value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      } else {
+        document.getElementById('editReminder').value = '';
+      }
+
+      toggleUrlField();
+      document.getElementById('editorModal').classList.add('open');
+    }
+
+    function closeEditor() { document.getElementById('editorModal').classList.remove('open'); }
+
+    function buildItemFromEditor(existing) {
+      const title = document.getElementById('editTitle').value.trim();
+      if (!title) return null;
+      const id = document.getElementById('editId').value || uid();
+      const type = document.getElementById('editType').value;
+      const url = document.getElementById('editUrl').value.trim() || null;
+      const content = document.getElementById('editContent').value.trim();
+      const tags = document.getElementById('editTags').value.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+      const remVal = document.getElementById('editReminder').value;
+      const reminderAt = remVal ? new Date(remVal).toISOString() : null;
+      const colorHex = document.getElementById('editColor').value;
+      const folderId = document.getElementById('editFolder').value || null;
+      const now = new Date().toISOString();
+      return {
+        id, type, title, url, content, tags, reminderAt,
+        isCompleted: existing ? !!existing.isCompleted : false,
+        isPinned: existing ? !!existing.isPinned : false,
+        priority: existing ? (existing.priority || 'medium') : 'medium',
+        colorHex,
+        checklist: existing ? (existing.checklist || []) : [],
+        images: [...editorImages],
+        folderId,
+        createdAt: existing ? existing.createdAt : now,
+        updatedAt: now,
+        isDeleted: false
+      };
+    }
+
+    function saveItem() {
+      const existing = items.find(e => e.id === document.getElementById('editId').value);
+      const item = buildItemFromEditor(existing);
+      if (!item) { showToast('Введите заголовок записи'); return; }
+      const idx = items.findIndex(e => e.id === item.id);
+      if (idx >= 0) items[idx] = { ...items[idx], ...item }; else items.unshift(item);
+
+      if (item.reminderAt && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+      saveAll();
+      closeEditor();
+      showToast('Запись сохранена');
+    }
+
+    // Folders
+    function openFolderEditor(id = null) {
+      const f = id ? folders.find(x => x.id === id) : null;
+      document.getElementById('folderModalTitle').textContent = f ? 'Редактировать папку' : 'Новая папка / группа';
+      document.getElementById('folderId').value = f ? f.id : '';
+      document.getElementById('folderName').value = f ? f.name : '';
+      document.getElementById('folderColor').value = f ? f.colorHex : '#3B82F6';
+      document.getElementById('folderPinned').checked = f ? !!f.isPinned : false;
+      document.getElementById('deleteFolderBtn').style.display = f ? 'inline-flex' : 'none';
+      document.getElementById('folderModal').classList.add('open');
+    }
+    function closeFolderEditor() { document.getElementById('folderModal').classList.remove('open'); }
+    function saveFolder() {
+      const id = document.getElementById('folderId').value || uid();
+      const name = document.getElementById('folderName').value.trim();
+      if (!name) { showToast('Введите название папки'); return; }
+      const colorHex = document.getElementById('folderColor').value;
+      const isPinned = document.getElementById('folderPinned').checked;
+      const now = new Date().toISOString();
+      const idx = folders.findIndex(f => f.id === id);
+      const folder = { id, name, colorHex, isPinned, createdAt: idx>=0?folders[idx].createdAt:now, updatedAt: now, isDeleted:false };
+      if (idx >= 0) folders[idx] = folder; else folders.push(folder);
+      saveAll();
+      closeFolderEditor();
+      populateFolderSelect(document.getElementById('editFolder').value || id);
+      document.getElementById('editFolder').value = id;
+      showToast('Папка сохранена');
+    }
+    function deleteFolder() {
+      const id = document.getElementById('folderId').value;
+      const f = folders.find(x => x.id === id);
+      if (f) { f.isDeleted = true; f.updatedAt = new Date().toISOString(); }
+      if (selectedFolderId === id) selectedFolderId = null;
+      saveAll();
+      closeFolderEditor();
+      showToast('Папка удалена');
+    }
+
+    // Export / Import full
+    function exportJsonFile() {
+      const envelope = {
+        app: 'MGtools', schemaVersion: 2, exportedAt: new Date().toISOString(), device: 'PC_Web_Companion',
+        items, folders
+      };
+      downloadJson(envelope, 'mgtools_sync.json');
+      document.getElementById('syncStatus').textContent = 'Экспортировано: ' + new Date().toLocaleTimeString('ru-RU');
+      showToast('Файл mgtools_sync.json сохранен');
+    }
+
+    function handleFileImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const incomingItems = Array.isArray(parsed) ? parsed : (parsed.items || []);
+          const incomingFolders = (parsed && Array.isArray(parsed.folders)) ? parsed.folders : [];
+          const res = smartMerge(incomingItems.map(normalizeItem), incomingFolders.map(normalizeFolder));
+          saveAll();
+          document.getElementById('syncStatus').textContent = `Синхронизировано: +${res.added} записей, +${res.fAdded} папок`;
+          showToast(`Слияние: записей +${res.added}/${res.updated} обн., папок +${res.fAdded}/${res.fUpdated} обн., пропущено ${res.skipped}`);
+        } catch (err) { showToast('Ошибка чтения файла JSON'); }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function smartMerge(incomingItems, incomingFolders) {
+      const byId = new Map(items.map(i => [i.id, i]));
+      const fById = new Map(folders.map(f => [f.id, f]));
+      let added=0, updated=0, skipped=0, fAdded=0, fUpdated=0;
+      incomingFolders.forEach(inc => {
+        const ex = fById.get(inc.id);
+        if (!ex) { fById.set(inc.id, inc); fAdded++; }
+        else if (new Date(inc.updatedAt) > new Date(ex.updatedAt)) { fById.set(inc.id, inc); fUpdated++; }
+      });
+      incomingItems.forEach(inc => {
+        const ex = byId.get(inc.id);
+        if (!ex) { byId.set(inc.id, inc); added++; }
+        else if (new Date(inc.updatedAt) > new Date(ex.updatedAt)) { byId.set(inc.id, inc); updated++; }
+        else { skipped++; }
+      });
+      items = Array.from(byId.values());
+      folders = Array.from(fById.values());
+      return {added,updated,skipped,fAdded,fUpdated};
+    }
+
+    // Single item export/import
+    function downloadJson(obj, filename) {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function exportSingleItemById(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const folder = getFolderById(item.folderId);
+      const envelope = { app:'MGtools', schemaVersion:2, exportedAt:new Date().toISOString(), singleItem:true, item, ...(folder?{folder}:{}) };
+      const safe = (item.title||'note').replace(/[\\/:*?"<>|]+/g,'_').trim() || item.id;
+      downloadJson(envelope, `mgtools_${safe}.json`);
+      showToast('Заметка сохранена в отдельный файл');
+    }
+    function exportSingleItemFromEditor() {
+      const existing = items.find(e => e.id === document.getElementById('editId').value);
+      const item = buildItemFromEditor(existing);
+      if (!item) { showToast('Введите заголовок записи'); return; }
+      const folder = getFolderById(item.folderId);
+      const envelope = { app:'MGtools', schemaVersion:2, exportedAt:new Date().toISOString(), singleItem:true, item, ...(folder?{folder}:{}) };
+      const safe = (item.title||'note').replace(/[\\/:*?"<>|]+/g,'_').trim() || item.id;
+      downloadJson(envelope, `mgtools_${safe}.json`);
+      showToast('Заметка сохранена в отдельный файл');
+    }
+    function handleSingleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          let item = null, folder = null;
+          if (parsed && parsed.singleItem && parsed.item) {
+            item = normalizeItem(parsed.item);
+            if (parsed.folder) folder = normalizeFolder(parsed.folder);
+          } else if (parsed && parsed.id && parsed.type) {
+            item = normalizeItem(parsed);
+          } else { throw new Error('bad'); }
+          const incItems = [item];
+          const incFolders = folder ? [folder] : [];
+          smartMerge(incItems, incFolders);
+          saveAll();
+          showToast('Загружена запись: ' + item.title);
+        } catch (err) { showToast('Файл не содержит отдельную запись MGtools'); }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { t.style.display = 'none'; }, 4200);
+    }
+
+    // Reminders check (works in browser/PC and on phone browsers if tab active; requests Notification permission)
+    setInterval(() => {
+      const now = Date.now();
+      items.forEach(item => {
+        if (item.isDeleted || item.isCompleted || !item.reminderAt) return;
+        const remTime = new Date(item.reminderAt).getTime();
+        if (now >= remTime && now - remTime < 90000 && !notifiedIds.has(item.id)) {
+          notifiedIds.add(item.id);
+          showToast('⏰ НАПОМИНАНИЕ: ' + item.title);
+          if ('Notification' in window) {
+            if (Notification.permission === 'granted') {
+              try { new Notification('MGtools: ' + item.title, { body: item.content || 'Напоминание сработало', tag: item.id }); } catch(e){}
+            } else if (Notification.permission === 'default') {
+              Notification.requestPermission();
+            }
+          }
+        }
+      });
+    }, 15000);
+
+    // Ask for notification permission early on interaction hint
+    document.addEventListener('click', function once() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(()=>{});
+      }
+      document.removeEventListener('click', once);
+    }, { once: true });
+
+    loadData();
+    render();
+  </script>
+</body>
+</html>
