@@ -4,6 +4,9 @@
 
 Приложение написано на **Flutter 3.50 / Dart 3.14**. Никакого собственного сервера и аккаунта не требуется: обмен данными идёт через файл `mgtools_sync.json`, который можно хранить в Google Drive, OneDrive, Яндекс.Диске или просто перекидывать через Quick Share.
 
+**Репозиторий:** https://github.com/MarcoGera/mgtools  
+**Готовые сборки (Releases):** https://github.com/MarcoGera/mgtools/releases
+
 ---
 
 ## Содержание
